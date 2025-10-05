@@ -1,0 +1,67 @@
+use bevy::{color::palettes::css::GRAY, math::VectorSpace, prelude::*};
+
+#[derive(Component)]
+pub struct Player;
+
+#[derive(Component)]
+pub struct LocalPlayer;
+
+#[derive(Component)]
+pub struct Grounded(pub bool);
+
+#[derive(Component)]
+pub struct Velocity {
+    pub linear: Vec3,
+}
+
+const PLAYER_SPEED: f32 = 5.0;
+const JUMP_FORCE: f32 = 10.0;
+
+pub fn spawn_character(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.spawn((
+        Player,
+        LocalPlayer,
+        Velocity { linear: Vec3::ZERO },
+        Grounded(false),
+        Mesh3d(meshes.add(Capsule3d::new(0.4, 0.5))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: GRAY.into(),
+            ..Default::default()
+        })),
+        Transform::from_xyz(0., 2.0, 0.),
+    ));
+}
+
+pub fn character_input(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Velocity, &Grounded), With<Player>>,
+) {
+    for (mut velocity, grounded) in &mut query {
+        let mut movement = Vec3::ZERO;
+
+        for key in keyboard_input.get_pressed() {
+            match key {
+                KeyCode::KeyW => movement.z -= 1.0,
+                KeyCode::KeyA => movement.x -= 1.0,
+                KeyCode::KeyD => movement.x += 1.0,
+                KeyCode::KeyS => movement.z += 1.0,
+                KeyCode::Space => {
+                    if grounded.0 {
+                        velocity.linear.y = JUMP_FORCE
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if movement.length() > 0.0 {
+            movement = movement * PLAYER_SPEED;
+            velocity.linear.x = movement.x;
+            velocity.linear.z = movement.z;
+        }
+    }
+}
