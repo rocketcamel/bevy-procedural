@@ -1,5 +1,7 @@
 use bevy::{color::palettes::css::GRAY, math::VectorSpace, prelude::*};
 
+use crate::camera::PanOrbitState;
+
 #[derive(Component)]
 pub struct Player;
 
@@ -39,16 +41,24 @@ pub fn spawn_character(
 pub fn character_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &Grounded), With<Player>>,
+    camera_query: Single<&Transform, With<PanOrbitState>>,
 ) {
+    let camera_transform = camera_query.into_inner();
+    let camera_forward = camera_transform.forward();
+    let camera_right = camera_transform.right();
+
+    let forward = Vec3::new(camera_forward.x, 0., camera_forward.z).normalize();
+    let right = Vec3::new(camera_right.x, 0., camera_right.z).normalize();
+
     for (mut velocity, grounded) in &mut query {
         let mut movement = Vec3::ZERO;
 
         for key in keyboard_input.get_pressed() {
             match key {
-                KeyCode::KeyW => movement.z -= 1.0,
-                KeyCode::KeyA => movement.x -= 1.0,
-                KeyCode::KeyD => movement.x += 1.0,
-                KeyCode::KeyS => movement.z += 1.0,
+                KeyCode::KeyW => movement += forward,
+                KeyCode::KeyA => movement -= right,
+                KeyCode::KeyD => movement += right,
+                KeyCode::KeyS => movement -= forward,
                 KeyCode::Space => {
                     if grounded.0 {
                         velocity.linear.y = JUMP_FORCE
