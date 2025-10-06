@@ -16,6 +16,12 @@ pub struct Velocity {
     pub linear: Vec3,
 }
 
+impl Default for Velocity {
+    fn default() -> Self {
+        Self { linear: Vec3::ZERO }
+    }
+}
+
 const PLAYER_SPEED: f32 = 5.0;
 const JUMP_FORCE: f32 = 10.0;
 
@@ -27,7 +33,7 @@ pub fn spawn_character(
     commands.spawn((
         Player,
         LocalPlayer,
-        Velocity { linear: Vec3::ZERO },
+        Velocity::default(),
         Grounded(false),
         Mesh3d(meshes.add(Capsule3d::new(0.4, 0.5))),
         MeshMaterial3d(materials.add(StandardMaterial {
